@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "fastapi store"
+version = "0.1.0"
+description = "A FastAPI training store"
+authors = ["ahMAD ASSadi <ds1380ahmad@gmail.com>"]
+license = "Apache License Version 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["standard"], version = "^0.115.5"}
+sqlmodel = "^0.0.22"
+psycopg2 = "^2.9.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
