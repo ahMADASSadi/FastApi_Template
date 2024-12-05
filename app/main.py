@@ -1,23 +1,31 @@
+from fastapi_cli import cli as fast_api_cli
+import uvicorn
 import sys
-import os
 import subprocess
 from pathlib import Path
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+from fastapi import FastAPI
+from app.config.setting import create_db_and_tables, get_session, create_database_if_not_exists
+from app.routers.user_router import router as user_router
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
 
-import uvicorn
+# Utility to run subprocess commands safely
+def run_subprocess(command: list[str]) -> None:
+    try:
+        result = subprocess.run(command, check=True,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print(result.stdout.decode())
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while running command: {e.stderr.decode()}")
+        raise
 
-from app.config.setting import create_db_and_tables, get_session,create_database_if_not_exists
-from app.routers.user_router import router as user_router
 
-
-def make_migrations(option:Optional[str]=None) -> None:
+# Function to handle Alembic migrations
+def make_migrations(option: Optional[str] = None) -> None:
     from app.config.setting import DATABASE_URL
-    
-    """Ensure Alembic is initialized and properly configured."""
+
     alembic_dir = Path("app/config/migrations")
     config_dir = Path("app/config")
     alembic_ini_path = config_dir / "alembic.ini"
@@ -26,7 +34,7 @@ def make_migrations(option:Optional[str]=None) -> None:
     # Step 1: Initialize Alembic if migrations folder doesn't exist
     if not alembic_dir.exists():
         print("Initializing Alembic...")
-        subprocess.run(["alembic", "init", str(alembic_dir)])
+        run_subprocess(["alembic", "init", str(alembic_dir)])
 
         # Move alembic.ini to app/config
         default_alembic_ini = Path("alembic.ini")
@@ -39,23 +47,16 @@ def make_migrations(option:Optional[str]=None) -> None:
 
         print("Alembic initialized.")
 
-    # Step 2: Add database URL to alembic.ini
+    # Step 2: Update alembic.ini with the correct DATABASE_URL
     if alembic_ini_path.exists():
         alembic_ini_content = alembic_ini_path.read_text()
-
-        # Fix `script_location` to point to the `migrations` directory only
         alembic_ini_content = alembic_ini_content.replace(
-            "script_location = app/config/migrations",  # Default location
-            "script_location = app/config/migrations"
+            "script_location = app/config/migrations", "script_location = app/config/migrations"
         )
-
-        # Update `sqlalchemy.url` with DATABASE_URL from settings
         alembic_ini_content = alembic_ini_content.replace(
-            "sqlalchemy.url = driver://user:pass@localhost/dbname", 
-            f"sqlalchemy.url = {DATABASE_URL}"
+            "sqlalchemy.url = driver://user:pass@localhost/dbname", f"sqlalchemy.url = {
+                DATABASE_URL}"
         )
-
-        # Write the updated alembic.ini
         alembic_ini_path.write_text(alembic_ini_content)
         print(f"Updated {alembic_ini_path} with the correct values.")
 
@@ -82,39 +83,49 @@ def make_migrations(option:Optional[str]=None) -> None:
             with open(env_py_path, "w") as f:
                 f.write(updated_env_py)
             print(f"Updated {env_py_path} to use SQLModel.")
-    
-    if option=="makemigrations":
-        subprocess.run(["alembic", "-c", str(alembic_ini_path), "revision", "--autogenerate", "-m", f'"{datetime.now()}"'])
-    elif option=="migrate":
-        subprocess.run(['alembic', "-c", str(alembic_ini_path),'upgrade','head'])
+
+    # Step 5: Handle migration or makemigrations based on the option
+    if option == "makemigrations":
+        run_subprocess(["alembic", "-c", str(alembic_ini_path),
+                       "revision", "--autogenerate", "-m", f'"{datetime.now().strftime('%Y-%m-%d:%H:%M')}"'])
+        print("Finished making migrations!")
+    elif option == "migrate":
+        run_subprocess(
+            ['alembic', "-c", str(alembic_ini_path), 'upgrade', 'head'])
+        print("All migrations are done!")
 
 
-
-
+# Asynchronous context manager for managing lifespan
 @asynccontextmanager
-async def lifespan(app:FastAPI):
+async def lifespan(app: FastAPI):
     await create_database_if_not_exists()
     create_db_and_tables()
     print("Database initialized!")
     yield
     print("Application shutting down!")
-    
 
-app = FastAPI(title="FastAPI store",lifespan=lifespan)
+
+# FastAPI app setup
+app = FastAPI(title="FastAPI store", lifespan=lifespan)
+app.include_router(user_router)
 
 
 @app.get('/')
 async def read_root():
     return {"message": "Welcome to the FastAPI store!"}
 
-app.include_router(user_router)
 
-
-
+# Main entry point for the app and migration handling
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] =="makemigrations":
-        make_migrations("makemigrations")
-    elif len(sys.argv) > 1 and sys.argv[1] == "migrate":
-        make_migrations("migrate")
+    if len(sys.argv) > 1:
+        command = sys.argv[1]
+        if command == "makemigrations":
+            make_migrations("makemigrations")
+        elif command == "migrate":
+            make_migrations("migrate")
+        else:
+            print(f"Unknown command: {command}")
     else:
+        # fast_api_cli.dev('app')
+        # This is where the app would run during development
         uvicorn.run(app, host='0.0.0.0', port=8000)

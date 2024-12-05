@@ -1,7 +1,9 @@
-from fastapi import Depends
-from sqlmodel import Session , create_engine,SQLModel
-from typing_extensions import Annotated
 import asyncpg
+from typing_extensions import Annotated
+
+from fastapi import Depends
+
+from sqlmodel import Session , create_engine,SQLModel
 
 DATABASE_PASSWORD='13801121'
 DATABASE_USER='madassandd'
