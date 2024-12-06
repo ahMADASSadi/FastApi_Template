@@ -1,8 +1,9 @@
+
 # FastAPI Project Template
 
 ## Overview
 
-This is a FastAPI project template that provides a customizable migration manager. It is designed to help developers quickly set up a FastAPI application with a robust database migration system using Alembic. The project utilizes the **Poetry** package manager for dependency management and virtual environment handling.
+This is a FastAPI project template that provides a customizable migration manager. It is designed to help developers quickly set up a FastAPI application with a robust database migration system powered by **Alembic**. The project uses the **Poetry** package manager for dependency management and virtual environment handling.
 
 ## Prerequisites
 
@@ -23,50 +24,50 @@ pip install poetry
 
 ### Step 2: Clone the Repository
 
-Clone this repository to your local machine either using the github desktop or
+Clone this repository to your local machine:
 
 ```bash
 git clone https://github.com/ahMADASSadi/FastApi_Template.git
 ```
 
-### Step 3: Install the requirements from poetry.lock file and activate the environment
+### Step 3: Install Dependencies and Activate the Environment
+
+Navigate to the project directory and run the following commands:
 
 ```bash
 poetry env use python3.12
-
 poetry install
-
 poetry shell
 ```
 
 ## Usage
 
-it's designed for ease of use so only with few command you can make migrations, migrate and run you server, below are the commands:
+This project is designed for ease of use. With just a few commands, you can make migrations, apply migrations, and run the server. Follow these steps:
 
-(first ensure you have the database setup and installed so there are no prpblem to face with)
+> **Note**: Ensure you have set up and configured the database before proceeding to avoid issues.
 
-navigate to the root of the project that contains the app folder so the commands work just fine
+Navigate to the root of the project (the directory containing the `app` folder) to ensure the commands work correctly.
 
-### Make the migrations
+### Create Migrations
 
 ```bash
 python -m app.main makemigrations
-
 ```
 
-### Migrate
+### Apply Migrations
 
 ```bash
 python -m app.main migrate
-
 ```
 
-### Run the server
+### Run the Server
 
 ```bash
 python -m app.main
 ```
 
-## **That's it !!!** 
+## Contributing
 
-i`d be happy of your contribion to improve and begreaten this project **:)**
+That's it! 🎉 
+
+Contributions to improve and enhance this project are highly welcome! Feel free to fork the repository and submit a pull request. 😊
