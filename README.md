@@ -1,8 +1,24 @@
-# FastApi
-A FastAPI-based training store 
+# FastAPI Project Template
 
-__This Project is using the poetry python package manager__
-@ahMADASSadi
-## If you don't already have poetry installed, install it using `pip install poetry`
+## Overview
+This is a FastAPI project template that provides a customizable migration manager. It is designed to help developers quickly set up a FastAPI application with a robust database migration system using Alembic. The project utilizes the **Poetry** package manager for dependency management and virtual environment handling.
 
-## Afterwards use `poetry init` and `poetry env user python3.12` to activate the virtual environment and use `poetry shell` to bring up the **poetry interactive shell**
+
+## Prerequisites
+Before you begin, ensure you have the following installed:
+- Python 3.6 or higher
+- pip (Python package installer)
+
+## Installation
+
+### Step 1: Install Poetry
+If you don't already have Poetry installed, you can install it using pip:
+
+```bash
+pip install poetry
+```
+### Step 2: Clone the Repository
+Clone this repository to your local machine either using the github desktop or
+```bash
+git clone https://github.com/ahMADASSadi/FastApi_Template.git
+```
