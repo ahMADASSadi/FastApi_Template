@@ -68,6 +68,6 @@ python -m app.main
 
 ## Contributing
 
-That's it! 🎉 
+That's it! 🎉
 
 Contributions to improve and enhance this project are highly welcome! Feel free to fork the repository and submit a pull request. 😊
