@@ -1,14 +1,12 @@
-from fastapi_cli import cli as fast_api_cli
-import uvicorn
 import sys
 import subprocess
-from pathlib import Path
 from datetime import datetime
+import uvicorn
+from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI
-from app.config.setting import create_db_and_tables, get_session, create_database_if_not_exists
-from app.routers.user_router import router as user_router
 from contextlib import asynccontextmanager
+from app.config.setting import create_db_and_tables, get_session, create_database_if_not_exists
 
 
 # Utility to run subprocess commands safely
@@ -107,13 +105,11 @@ async def lifespan(app: FastAPI):
 
 # FastAPI app setup
 app = FastAPI(title="FastAPI store", lifespan=lifespan)
-app.include_router(user_router)
 
 
 @app.get('/')
 async def read_root():
-    return {"message": "Welcome to the FastAPI store!"}
-
+    return {"message": "Welcome to the FastAPI!"}
 
 # Main entry point for the app and migration handling
 if __name__ == "__main__":

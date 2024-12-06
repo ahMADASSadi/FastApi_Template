@@ -5,13 +5,13 @@ from fastapi import Depends
 
 from sqlmodel import Session , create_engine,SQLModel
 
-DATABASE_PASSWORD='13801121'
-DATABASE_USER='madassandd'
+DATABASE_PASSWORD='db_password'
+DATABASE_USER='db_user'
 DATABASE_HOST='localhost'
-DATABASE_NAME='fast_store'
-DATABASE_PATH='postgresql+psycopg2'
+DATABASE_NAME='db_name'
+DATABASE_TYPE='db_type'
 
-DATABASE_URL=f"{DATABASE_PATH}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
+DATABASE_URL=f"{DATABASE_TYPE}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
 
 engine = create_engine(DATABASE_URL,echo=True)
 
@@ -21,7 +21,7 @@ async def create_database_if_not_exists():
     # Parse the database URL
     database_name = DATABASE_NAME
     connection = await asyncpg.connect(
-        user=DATABASE_USER, password=DATABASE_PASSWORD, database="postgres", host=DATABASE_HOST
+        user=DATABASE_USER, password=DATABASE_PASSWORD, database=DATABASE_TYPE, host=DATABASE_HOST
     )
     exists = await connection.fetchval(
         f"SELECT 1 FROM pg_database WHERE datname = '{database_name}'"
