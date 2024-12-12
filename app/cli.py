@@ -21,6 +21,12 @@ def run_subprocess(command: list[str]) -> None:
         raise
 
 
+"""
+    Function to create a superuser by prompting for the phone number.
+    
+    Based on yout preferences you can change and update both this view and the user model,
+it will works just fine.
+"""
 def create_super_user(session: Session):
     """
     Function to create a superuser by prompting for the phone number.
