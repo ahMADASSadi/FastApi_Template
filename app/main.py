@@ -33,10 +33,16 @@ app.include_router(admin_router)
 
 # Main entry point for the app and migration handling
 if __name__ == "__main__":
+    """
+    If length of the enterd argument is greater than 1
+    """
     if len(sys.argv) > 1:
         command = sys.argv[1]
         commands(command)
     else:
+        """
+        for running the app using the uvicorn and in the production mode rather than the FastAPI built-in command (fastapi run)
+        """
         # fast_api_cli.dev('app')
         # This is where the app would run during development
         uvicorn.run(app, host='0.0.0.0', port=8000)
