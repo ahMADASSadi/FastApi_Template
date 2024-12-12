@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "fastapi store"
+name = "FastAPI-Template"
 version = "0.1.0"
-description = "A FastAPI training store"
+description = "A FastAPI Template for simplification of usage"
 authors = ["ahMAD ASSadi <ds1380ahmad@gmail.com>"]
 license = "Apache License Version 2.0"
 readme = "README.md"
