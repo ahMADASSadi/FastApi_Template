@@ -1,0 +1,80 @@
+ARG PYTHON_BASE_IMAGE=python:3.12.8-slim-bookworm
+
+FROM ${PYTHON_BASE_IMAGE} AS builder
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV UV_DEFAULT_INDEX=https://package-mirror.liara.ir/repository/pypi/simple
+
+# Configure IUT mirror and force fix dependencies
+RUN rm -f /etc/apt/sources.list.d/debian.sources && \
+    echo "deb http://repo.iut.ac.ir/debian/ trixie main" > /etc/apt/sources.list && \
+    echo "deb http://repo.iut.ac.ir/debian/ trixie-updates main" >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends -f && \
+    apt-get install -y --no-install-recommends \
+    libpq-dev \
+    python3-dev \
+    build-essential \
+    gettext \
+    gcc \
+    --allow-downgrades \
+    || apt-get install -y --no-install-recommends \
+    postgresql-client \
+    python3-dev \
+    build-essential \
+    gettext \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy ONLY requirements first (for caching)
+COPY src/pyproject.toml /app/pyproject.toml
+COPY src/uv.lock /app/uv.lock
+
+# Build wheels using Liara mirror (via environment variable)
+RUN pip install --upgrade pip uv && \
+    uv pip compile --frozen /app/pyproject.toml --output-file=/app/requirements.txt && \
+    uv pip wheel --index-url ${UV_DEFAULT_INDEX} --wheel-dir=/app/wheels -r /app/requirements.txt
+
+# Stage 2: Runtime
+FROM ${PYTHON_BASE_IMAGE} AS runtime
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV TZ=Asia/Tehran
+ENV UV_INDEX_URL=https://package-mirror.liara.ir/repository/pypi/simple
+
+# Configure IUT mirror and force fix dependencies
+RUN rm -f /etc/apt/sources.list.d/debian.sources && \
+    echo "deb http://repo.iut.ac.ir/debian/ trixie main" > /etc/apt/sources.list && \
+    echo "deb http://repo.iut.ac.ir/debian/ trixie-updates main" >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends -f && \
+    apt-get install -y --no-install-recommends \
+    libpq-dev \
+    tzdata \
+    --allow-downgrades \
+    || apt-get install -y --no-install-recommends \
+    postgresql-client \
+    tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy ONLY requirements first
+COPY src/pyproject.toml /app/pyproject.toml
+COPY src/uv.lock /app/uv.lock
+
+# Copy wheels and install (cached if requirements unchanged)
+COPY --from=builder /app/wheels /wheels
+RUN pip install --no-index --find-links=/wheels -r /app/requirements.txt && \
+    rm -rf /wheels
+
+# Copy source code LAST (changes most often)
+COPY src/ /app/
+
+
+EXPOSE 8000

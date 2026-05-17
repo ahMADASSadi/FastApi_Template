@@ -1,0 +1,106 @@
+services:
+  django:
+    container_name: "web"
+    image: #
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - backend-network
+    volumes:
+      - static-volume:/app/static
+      - media-volume:/app/media
+      - /root/.cache/my_pip:/root/.cache/pip
+    env_file:
+      - ./src/config/env/.env
+    command: sh -c "./entrypoint.sh"
+
+  redis:
+    container_name: "redis"
+    image: redis:latest
+    networks:
+      - backend-network
+    volumes:
+      - redis-data:/data
+
+  celery-worker:
+    container_name: "worker"
+    image: #
+    networks:
+      - backend-network
+    volumes:
+      - ./src:/app
+    env_file:
+      - ./src/config/env/.env
+    depends_on:
+      - django
+      - redis
+    command: celery -A config worker --loglevel=info
+
+  celery-beat:
+    container_name: "beat"
+    image: #
+    networks:
+      - backend-network
+    volumes:
+      - ./src:/app
+    env_file:
+      - ./src/config/env/.env
+    restart: unless-stopped
+    depends_on:
+      - celery-worker
+      - django
+      - redis
+    command: celery -A config beat --loglevel=info
+
+  db:
+    container_name: "db"
+    image: postgres:16.4
+    restart: always
+    networks:
+      - backend-network
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME:-core_db}
+      DB_USERNAME: ${DB_USERNAME:-db_user}
+      DB_PASSWORD: ${DB_PASSWORD:-socialnetwork24}
+      DB_NAME: ${DB_NAME:-core_db}
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "export PGPASSWORD=$$DB_PASSWORD && pg_isready -U $$DB_USERNAME -d $$DB_NAME"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  nginx:
+    container_name: "nginx"
+    image: backend-nginx:latest
+    build:
+      context: ../nginx
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - backend-network
+    volumes:
+      - static-volume:/app/static
+      - media-volume:/app/media
+    depends_on:
+      - django
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  static-volume:
+  media-volume:
