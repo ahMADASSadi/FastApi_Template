@@ -1,0 +1,161 @@
+set dotenv-path := "./config/env/.env"
+set dotenv-load := true
+
+ROOT := justfile_directory()
+ALEMBIC_CONFIG := ROOT / "pyproject.toml"
+HOST := env("HOST", "0.0.0.0")
+PORT := env("PORT", "8001")
+WORKERS := env("WORKERS", "4")
+APP := env("APP", "cmd.main:app")
+TASKS_PATH := ROOT / "apps" / "tasks"
+TASKS_MODULES := "apps.tasks"
+COMPOSE_DIR := ROOT + "/../docker-compose.yaml"
+default:
+    just --list
+# ============================================
+# DATABASE & MIGRATIONS
+# ============================================
+m REV="head":
+    #! /bin/bash
+    PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} upgrade {{ REV }}
+mm MESSAGE:
+    #! /bin/bash
+    PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} revision --autogenerate -m {{ MESSAGE }}
+
+mmm MESSAGE REV="head": (mm MESSAGE) (m REV)
+
+downgrade REV="base":
+    #! /bin/bash
+    PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} downgrade {{ REV }}
+
+dbc:
+    #! /bin/bash
+    PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} current
+
+dbh:
+    #! /bin/bash
+    PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} history
+
+dbs REV="head":
+    #! /bin/bash
+    PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} stamp {{ REV }}
+
+lint:
+    ruff check .
+
+lint-fix:
+    ruff check --fix .
+
+format:
+    ruff format .
+
+check: lint format
+
+run: dev
+
+prod:
+    gunicorn \
+        -w "{{ WORKERS }}" \
+        -k uvicorn.workers.UvicornWorker \
+        --bind {{ HOST }}:{{ PORT }} \
+        {{ APP }}
+
+dev:
+    uvicorn {{ APP }} \
+        --host {{ HOST }} \
+        --port {{ PORT }} \
+        --reload
+
+dramatiq:
+    dramatiq {{ TASKS_MODULES }} \
+        --watch {{ TASKS_PATH }} \
+        --processes {{ WORKERS }}
+
+taskiq:
+    taskiq \
+    worker \
+    {{ TASKS_MODULES }}:broker \
+    --log-level WARNING
+
+help:
+    @just --list
+
+sync:
+    uv sync
+
+run-prod:
+    uv run uvicorn cmd.main:app --host 0.0.0.0 --port 8001
+
+test:
+    uv run pytest
+
+# ============================================
+# DOCKER
+# ============================================
+
+# Start Docker services
+docker-up:
+    @docker compose -f {{ COMPOSE_DIR }} up -d --remove-orphans --build
+
+# Stop Docker services
+docker-down:
+    @docker compose -f {{ COMPOSE_DIR }} down
+
+# Build Docker images
+docker-build:
+    @docker compose -f {{ COMPOSE_DIR }} build
+
+# Restart Docker services
+docker-restart:
+    @docker compose -f {{ COMPOSE_DIR }} restart
+
+# Build without cache
+docker-build-no-cache:
+    @docker compose -f {{ COMPOSE_DIR }} build --no-cache
+
+# View Docker logs
+docker-logs:
+    @docker compose -f {{ COMPOSE_DIR }} logs -f
+
+# View logs for specific service
+docker-logs-service service:
+    @docker compose -f {{ COMPOSE_DIR }} logs -f {{ service }}
+
+# Show Docker status
+docker-ps:
+    @docker compose -f {{ COMPOSE_DIR }} ps
+
+# Execute command in Docker container
+docker-exec service cmd:
+    @docker compose -f {{ COMPOSE_DIR }} exec {{ service }} {{ cmd }}
+
+
+# ============================================
+# GIT & TAGGING
+# ============================================
+tag:
+    #!/bin/bash
+    latest_tag=$(git tag -l | sort -V | tail -1)
+    echo "Last tag: $latest_tag"
+    read -p "Increment (major/minor/patch) or Enter tag number? [patch]: " increment
+    increment=${increment:-patch}
+    
+    # Check if user entered a custom tag (starts with 'v' or is a version number)
+    if [[ $increment =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        tag_value=$([[ $increment =~ ^v ]] && echo "$increment" || echo "v$increment")
+    elif [ -z "$latest_tag" ]; then
+        tag_value="v0.0.1"
+    else
+        major=$(echo $latest_tag | cut -d. -f1 | sed 's/v//')
+        minor=$(echo $latest_tag | cut -d. -f2)
+        patch=$(echo $latest_tag | cut -d. -f3)
+        case "$increment" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+        esac
+        tag_value="v$major.$minor.$patch"
+    fi
+    git tag "$tag_value" && \
+    git push origin "$tag_value" && \
+    echo "Tag $tag_value pushed successfully!"

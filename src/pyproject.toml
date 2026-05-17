@@ -1,0 +1,40 @@
+[project]
+name = "fastapi-template"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic[tz]>=1.18.4",
+    "asyncpg>=0.31.0",
+    "cryptography>=48.0.0",
+    "dotenv>=0.9.9",
+    "fastapi-filter[sqlalchemy]>=2.0.1",
+    "fastapi-pagination>=0.15.12",
+    "fastapi[standard]>=0.136.1",
+    "loguru>=0.7.3",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
+    "pyjwt>=2.12.1",
+    "redis>=7.4.0",
+    "sqlalchemy>=2.0.49",
+    "uvicorn[standard]>=0.46.0",
+]
+[dependency-groups]
+dev = ["pyrefly>=1.0.0", "ruff>=0.15.12"]
+
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+url = "https://package-mirror.liara.ir/repository/pypi/simple/"
+
+[tool.ruff]
+line-length = 100
+exclude = ["**/migrations/**"]
+
+
+[tool.alembic]
+script_location = "%(here)s/database/migrations"
+file_template = "%%(slug)s_%%(rev)s_s%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d"
+prepend_sys_path = ["./src"]
+timezone = 'Asia/Tehran'
