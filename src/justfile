@@ -15,27 +15,34 @@ default:
 # ============================================
 # DATABASE & MIGRATIONS
 # ============================================
+
+[doc("Run database migrations to specific revision (default: head)")]
 m REV="head":
     #! /bin/bash
     PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} upgrade {{ REV }}
+
+[doc("Generate new migration with message")]
 mm MESSAGE:
     #! /bin/bash
     PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} revision --autogenerate -m {{ MESSAGE }}
 
+[doc("Generate new migration with message and upgrade to head")]
 mmm MESSAGE REV="head": (mm MESSAGE) (m REV)
 
 downgrade REV="base":
     #! /bin/bash
     PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} downgrade {{ REV }}
 
+[doc("Show current database revision")]
 dbc:
     #! /bin/bash
     PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} current
-
+[doc("Show database revision history")]
 dbh:
     #! /bin/bash
     PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} history
 
+[doc("Stamp database with specific revision without running migrations")]
 dbs REV="head":
     #! /bin/bash
     PYTHONPATH=. uv run alembic -c {{ ALEMBIC_CONFIG }} stamp {{ REV }}
@@ -93,39 +100,43 @@ test:
 # DOCKER
 # ============================================
 
-# Start Docker services
+[doc("Start Docker services")]
 docker-up:
     @docker compose -f {{ COMPOSE_DIR }} up -d --remove-orphans --build
 
-# Stop Docker services
+[doc("Start Docker services with watch mode (no daemon)")]
+docker-upw:
+    @docker compose -f {{ COMPOSE_DIR }} up -w --remove-orphans --build
+
+[doc("Stop Docker services")]
 docker-down:
     @docker compose -f {{ COMPOSE_DIR }} down
 
-# Build Docker images
+[doc("Build Docker images")]
 docker-build:
     @docker compose -f {{ COMPOSE_DIR }} build
 
-# Restart Docker services
+[doc("Restart Docker services")]
 docker-restart:
     @docker compose -f {{ COMPOSE_DIR }} restart
 
-# Build without cache
+[doc("Build without cache")]
 docker-build-no-cache:
     @docker compose -f {{ COMPOSE_DIR }} build --no-cache
 
-# View Docker logs
+[doc("View Docker logs")]   
 docker-logs:
     @docker compose -f {{ COMPOSE_DIR }} logs -f
 
-# View logs for specific service
+[doc("View logs for specific service")]
 docker-logs-service service:
     @docker compose -f {{ COMPOSE_DIR }} logs -f {{ service }}
 
-# Show Docker status
+[doc("Show Docker status")]
 docker-ps:
     @docker compose -f {{ COMPOSE_DIR }} ps
 
-# Execute command in Docker container
+[doc("Execute command in Docker container")]
 docker-exec service cmd:
     @docker compose -f {{ COMPOSE_DIR }} exec {{ service }} {{ cmd }}
 
@@ -133,6 +144,8 @@ docker-exec service cmd:
 # ============================================
 # GIT & TAGGING
 # ============================================
+
+[doc("Create and push new git tag with interactive version increment or custom tag input")]
 tag:
     #!/bin/bash
     latest_tag=$(git tag -l | sort -V | tail -1)
