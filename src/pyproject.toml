@@ -1,10 +1,12 @@
 [project]
-name = "fastapi-template"
+name = "source"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "alembic[tz]>=1.18.4",
+    "asynctasq[fastapi,redis]>=1.7.0",
     "asyncpg>=0.31.0",
+    "bleach>=6.3.0",
     "cryptography>=48.0.0",
     "dotenv>=0.9.9",
     "fastapi-filter[sqlalchemy]>=2.0.1",
@@ -15,18 +17,19 @@ dependencies = [
     "pydantic-settings>=2.14.1",
     "pyjwt>=2.12.1",
     "redis>=7.4.0",
+    "slowapi>=0.1.9",
     "sqlalchemy>=2.0.49",
     "uvicorn[standard]>=0.46.0",
 ]
 [dependency-groups]
-dev = ["pyrefly>=1.0.0", "ruff>=0.15.12"]
+dev = ["alembic-postgresql-enum>=1.10.0", "pyrefly>=1.0.0", "ruff>=0.15.12"]
 
 
 [tool.uv]
 package = false
 
-[[tool.uv.index]]
-url = "https://package-mirror.liara.ir/repository/pypi/simple/"
+# [[tool.uv.index]]
+# url = "https://package-mirror.liara.ir/repository/pypi/simple/"
 
 [tool.ruff]
 line-length = 100
