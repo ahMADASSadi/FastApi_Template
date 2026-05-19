@@ -13,8 +13,8 @@
 #     def __init__(self, cache: Cache, ttl: int = DEFAULT_TTL):
 #         self.cache = cache
 #         self.ttl = ttl
-#         settings = get_setting("danajou")
-#         self.issuer_url = settings.DANAJOU_API_URL
+#         settings = get_setting("X")
+#         self.issuer_url = settings.X_API_URL
 #         self.key_url = settings.JWT_PUBLIC_KEY_URL + "/"
 #         self.api_key = settings.API_KEY
 #         self.api_secret = settings.API_SECRET

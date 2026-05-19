@@ -116,7 +116,7 @@
 # ):
 #     """Auth dependency: expects `Authorization` header containing a Bearer token.
 
-#     Decodes the JWT token using the issuer's public key (fetched from Danajou API and cached).
+#     Decodes the JWT token using the issuer's public key (fetched from X API and cached).
 #     Automatically refreshes the key if validation fails to handle key rotation.
 #     """
 #     return await __get_current_user(
