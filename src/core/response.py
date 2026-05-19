@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -6,4 +8,4 @@ class ApiResponse[T](BaseModel):
     status: int = 200
     data: T | None = None
     message: str = "success"
-    error: dict | None = None
+    error: Any | None = None

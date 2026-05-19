@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 
-from fastapi import Depends
-
-from core.cache import Cache, get_cache
+from core.logger import Logger
 
 
 @dataclass(frozen=True)
 class BaseServiceConfig:
-    cache_key_prefix: str
-    logger: type
-    cache: Cache = Depends(get_cache)
+    cache_prefix: str
+    cache_ttl: int
+    logger: Logger
