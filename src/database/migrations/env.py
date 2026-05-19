@@ -5,12 +5,14 @@ from pathlib import Path
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
+import alembic_postgresql_enum
 
 from config.settings import get_setting
 from database.base import BaseModelWithDeleted  # type:ignore
+from models import *  # noqa: F401
+    
 
-# import models that you want to be reviewed at the migration creation(automatically)
-# from models.x import x
+# from models.users import User, UserRole  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,7 +20,7 @@ config = context.config
 
 config.set_main_option(
     "sqlalchemy.url",
-    str(get_setting("db").DATABASE_DSN),  # type:ignore
+    str(get_setting("db").DATABASE_ASYNC_URL),  # type:ignore
 )
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -46,8 +48,8 @@ def include_object(object, name, type_, reflected, compare_to):
         if reflected and compare_to is None:
             return False
         # skip specific tables by name even if they appear in metadata/DB
-        # if name in []:
-        #     return False
+        if name in ["accounts_user", "accounts_userrole", "acccounts_user", "accounts_profile", "activities_relation"]:
+            return False
         return True
 
     # For columns: allow only those not marked to skip

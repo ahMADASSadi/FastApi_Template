@@ -6,7 +6,7 @@ from config.settings import get_setting
 
 db_settings = get_setting("db")
 engine = create_async_engine(
-    url=str(db_settings.DATABASE_DSN),
+    url=str(db_settings.DATABASE_ASYNC_URL),
     pool_size=db_settings.MAX_CONNECTIONS,
     max_overflow=db_settings.MAX_OVERFLOW,
     pool_pre_ping=True,
