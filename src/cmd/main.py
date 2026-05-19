@@ -62,12 +62,7 @@ def get_app() -> FastAPI:
         app.add_middleware(HTTPSRedirectMiddleware)
         app.add_middleware(
             TrustedHostMiddleware,
-            allowed_hosts=[
-                "danajou.com",
-                "*.danajou.com",
-                "danajou.ir",
-                "*.danajou.ir",
-            ],
+            allowed_hosts=[__security_settings.ALLOWED_HOSTS],  # type: ignore
         )
     app.add_middleware(SlowAPIMiddleware)
 
