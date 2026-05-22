@@ -80,8 +80,12 @@ def get_app() -> FastAPI:
     ) -> JSONResponse:
         return SecurityAwareExceptionHandler.handle_validation_error(request, exc)
 
-    @app.exception_handler(500)
-    async def internal_exception_handler(request: Request, exc: BaseException) -> JSONResponse:
+    @app.exception_handler(404)
+    async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
+        return SecurityAwareExceptionHandler.handle_not_found_error(request, exc)
+
+    @app.exception_handler(Exception)
+    async def internal_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         return SecurityAwareExceptionHandler.handle_internal_error(request, exc, status_code=500)
 
     app.include_router(v1_router)

@@ -5,16 +5,18 @@ from uuid import uuid4
 from pydantic import TypeAdapter
 from redis.asyncio.client import Redis
 from redis.asyncio.connection import ConnectionPool
+from redis.typing import DecodedT, EncodableT, ResponseT
 
 from config.settings import get_setting
 
 
 class Cache:
     def __init__(self, *args, **kwargs):
+        __settings = get_setting("redis")
         host, port, password = (
-            get_setting("redis").REDIS_DSN.host,
-            get_setting("redis").REDIS_DSN.port,
-            get_setting("redis").REDIS_DSN.password,
+            __settings.REDIS_DSN.host,
+            __settings.REDIS_DSN.port,
+            __settings.REDIS_DSN.password,
         )
 
         self._pool = ConnectionPool(
@@ -39,14 +41,16 @@ class Cache:
     async def __aexit__(self, exc_type, exc, tb):
         await self.close()
 
-    async def set(self, key: str, value, ttl: int = 3600):
+    async def set(
+        self, key: str, value: str | bytes | int | float | bool | EncodableT, ttl: int = 3600
+    ) -> ResponseT:
         """Set a value with TTL (seconds)."""
         return await self._redis.set(key, value, ex=ttl)
 
-    async def get(self, key: str):
+    async def get(self, key: str) -> DecodedT:
         return await self._redis.get(key)
 
-    async def delete(self, key: str):
+    async def delete(self, key: str) -> ResponseT:
         return await self._redis.delete(key)
 
 
@@ -89,7 +93,11 @@ class CacheHelper:
         return version
 
     async def build_cache_key(
-        self, scope: str, path: str, query_params: str, user_id: int | None = None
+        self,
+        scope: str,
+        path: str,
+        query_params: str,
+        user_id: int | None = None,
     ) -> str:
         """
         Build a cache key with the namespace version, scope, path, query params, and optional user ID.
@@ -123,16 +131,33 @@ class CacheHelper:
             return None
 
         normalized = self._normalize_payload(payload)
+        data = json.loads(normalized)
 
         # If response_type is dict, list, or other built-in types, just parse and return
         if response_type in (dict, list) or not hasattr(response_type, "model_validate"):
-            return json.loads(normalized)
+            return data
 
         # Otherwise, validate as Pydantic model
-        return TypeAdapter(response_type).validate_json(normalized)
+        try:
+            adapter = TypeAdapter(response_type)
+            return adapter.validate_json(normalized, by_alias=True, by_name=True)
+        except Exception:
+            try:
+                return TypeAdapter(response_type).validate_python(
+                    data,
+                    by_alias=True,
+                    by_name=True,
+                )
+            except Exception:
+                # Log the error and return None if deserialization fails
+                return None
 
     async def set_cached_response(
-        self, cache_key: str, response: Any, ttl: int | None = None, is_json: bool = False
+        self,
+        cache_key: str,
+        response: Any,
+        ttl: int | None = None,
+        is_json: bool = False,
     ) -> None:
         """
         Serialize and cache a response.
@@ -143,17 +168,18 @@ class CacheHelper:
             ttl: Optional override for TTL (uses instance default if None).
             is_json: Whether the response is raw JSON data (dict/list) or already a JSON string.
         """
+
         if is_json:
             # Response is raw data (dict/list) or already a JSON string
             if isinstance(response, str):
                 # Already a JSON string
                 value = response
             else:
-                # Convert dict/list to JSON string
                 value = json.dumps(response)
         else:
-            # Response is a Pydantic model
-            value = response.model_dump_json()
+            value = response.model_dump_json(
+                by_alias=True, exclude_none=False, exclude={"exclusion_fields"}
+            )
 
         await self.cache.set(
             cache_key,

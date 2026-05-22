@@ -18,3 +18,8 @@ async def enqueue_echo_task(payload: EchoTaskRequest) -> dict[str, str]:
         "queue": "default",
         "status": "queued",
     }
+
+
+@api_router.get("/health", status_code=200)
+async def health_check() -> dict[str, str]:
+    return {"status": "ok"}

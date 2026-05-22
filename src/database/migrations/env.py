@@ -48,7 +48,7 @@ def include_object(object, name, type_, reflected, compare_to):
         if reflected and compare_to is None:
             return False
         # skip specific tables by name even if they appear in metadata/DB
-        if name in ["accounts_user", "accounts_userrole", "acccounts_user", "accounts_profile", "activities_relation"]:
+        if name in [""]:
             return False
         return True
 

@@ -34,8 +34,8 @@ class AppSettings(BaseSettings):
         return {
             "title": f"{self.APP_NAME.title()} API",
             "version": self.VERSION,
-            "description": "API documentation for Sepehr backend service.",
-            "contact": {"name": "Sepehr Support", "email": "support@sepehr.com"},
+            "description": "API documentation for backend service.",
+            "contact": {"name": "Support", "email": ""},
         }
 
 
@@ -57,7 +57,7 @@ class AsyncTasQSettings(BaseSettings):
     ASYNCTASQ_TASK_DEFAULTS_RETRY: bool
     ASYNCTASQ_BROKER_URL: RedisDsn | AmqpDsn
     ASYNCTASQ_TASK_DEFAULTS_RETRY_POLICY: dict
-    ASYNCTASQ_RESULT_BACKEND_URL: RedisDsn| AmqpDsn
+    ASYNCTASQ_RESULT_BACKEND_URL: RedisDsn | AmqpDsn
 
 
 class SecuritySettings(BaseSettings):
@@ -84,6 +84,14 @@ def get_setting(class_name: Literal["asynctasq"]) -> AsyncTasQSettings: ...
 def get_setting(class_name: Literal["security"]) -> SecuritySettings: ...
 
 
+db = DBSettings()
+http = HTTPSettings()
+app = AppSettings()
+redis = RedisSettings()
+security = SecuritySettings()
+asynctasq = AsyncTasQSettings()
+
+
 def get_setting(
     class_name: SettingsName,
 ) -> (
@@ -97,10 +105,10 @@ def get_setting(
 ):
     """Returns the existing settings' class else None"""
     return {
-        "db": DBSettings(),
-        "http": HTTPSettings(),
-        "app": AppSettings(),
-        "redis": RedisSettings(),
-        "security": SecuritySettings(),
-        "asynctasq": AsyncTasQSettings(),
+        "db": db,
+        "http": http,
+        "app": app,
+        "redis": redis,
+        "security": security,
+        "asynctasq": asynctasq,
     }.get(class_name)

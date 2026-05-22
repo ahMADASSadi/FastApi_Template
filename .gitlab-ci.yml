@@ -1,0 +1,22 @@
+stages:
+  - deploy
+
+variables:
+  DEPLOY_DIR: "/var/www/Backend"
+  GIT_STRATEGY: pull
+
+deploy-to-production:
+  stage: deploy
+  tags:
+    - prod
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_MERGE_REQUEST_STATE == "merged"'
+      when: on_success
+    - if: $CI_COMMIT_TAG =~ /^v.*$/
+  script:
+    - 'echo "=== API Production Deployment ===" && echo "Current directory: $(pwd)" && echo "$PROD_ENV" > .env && docker compose down --timeout 30 || true && docker compose build --pull && docker compose up -d --remove-orphans && sleep 10 && docker compose ps && (docker compose ps | grep -q "Up" || (echo "ERROR: Some services failed!" && docker compose logs --tail=50 && exit 1)) && docker image prune -f --filter "until=168h" || true'
+  environment:
+    name: production
+    url: https://api.example.com
+  timeout: 30m
